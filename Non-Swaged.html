@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-Swaged Cartridge Heaters Pricing Calculator</title>
+    <script>
+        const basePricing = {
+            "5/8": {
+                lengths: { 2: 63.25, 3: 67.63, 4: 72.01, 5: 76.39, 6: 80.77, 7: 85.15, 8: 89.53, 9: 93.91, 10: 98.29, 11: 102.67, 12: 107.05 },
+                addInch: 4.38
+            },
+            "3/4": {
+                lengths: { 2: 75.79, 3: 80.82, 4: 85.85, 5: 90.88, 6: 95.91, 7: 100.94, 8: 105.97, 9: 111.00, 10: 116.03, 11: 121.06, 12: 126.09 },
+                addInch: 5.03
+            },
+            "1": {
+                lengths: { 2: 90.41, 3: 97.72, 4: 105.03, 5: 112.34, 6: 119.65, 7: 126.96, 8: 134.27, 9: 141.58, 10: 148.89, 11: 156.20, 12: 163.51 },
+                addInch: 7.31
+            }
+        };
+
+        const leadLengthAdders = {
+            "18": { 10: 0.00, 12: 1.44, 18: 5.76, 24: 10.08, 30: 14.40, 36: 18.72, 48: 27.36, 60: 36.00, 72: 44.64, perInch: 0.72 },
+            "16": { 10: 1.80, 12: 3.60, 18: 9.00, 24: 14.40, 30: 19.80, 36: 25.20, 48: 36.00, 60: 46.80, 72: 57.60, perInch: 0.90 },
+            "14": { 10: 4.70, 12: 7.08, 18: 14.22, 24: 21.36, 30: 28.50, 36: 35.64, 48: 49.92, 60: 64.20, 72: 78.48, perInch: 1.19 },
+            "sjo2": { 10: 20.00, 12: 21.12, 18: 24.48, 24: 27.84, 30: 31.20, 36: 34.56, 48: 41.28, 60: 48.00, 72: 54.72, perInch: 0.56 },
+            "sjo3": { 10: 35.85, 12: 37.41, 18: 42.09, 24: 46.77, 30: 51.45, 36: 56.13, 48: 65.49, 60: 74.85, 72: 84.21, perInch: 0.78 }
+        };
+
+        const leadConfigs = {
+            none: 0,
+            rightAngle: 16.68,
+            crimped: 0,
+            strainRelief: 16.68,
+            springGuard: 19.21,
+            ceramicBeads: 6.61,
+            singleShrinkBoth: 0.61,
+            shrinkEach: 0.83,
+            groundBase: 13.67,
+            groundPerInch: 0.25
+        };
+
+        const endSeals = {
+            rtv: 0.00,
+            epoxy: 11.60,
+            epoxylite: 20.39,
+            epoxyOverRtv: 18.29
+        };
+
+        const armorPrices = {
+            straight: [17.58, 23.94, 33.48, 43.02, 52.56, 62.10, 81.18, 100.26, 119.34],
+            rightAngle: [29.06, 35.42, 44.96, 54.50, 64.04, 73.58, 92.66, 111.74, 130.82]
+        };
+        const armorPerInch = 1.59;
+
+        const braidPrices = {
+            straight: [20.60, 25.92, 33.90, 41.88, 49.86, 57.84, 73.80, 89.76, 105.72],
+            rightAngle: [29.34, 34.66, 42.64, 49.60, 58.60, 66.58, 82.54, 98.50, 114.46],
+            overEach: [20.60, 25.92, 33.90, 41.88, 49.86, 57.84, 73.80, 89.76, 105.72]
+        };
+        const braidPerInch = 1.33;
+
+        const tcTable = { 10: 32.15, 12: 33.33, 18: 36.87, 24: 40.41, 30: 43.95, 36: 47.49, 48: 54.57, 60: 61.65, 72: 68.73 };
+        const tcPerInch = 0.59;
+
+        const fittingsTable = {
+            "1/2_NPT": { brass: 30.12, ss304: 58.32, ss316: 67.81 },
+            "double_1/2_NPT": { brass: 55.65, ss304: 91.69, ss316: "N/A" },
+            "3/4_NPT": { brass: 34.98, ss304: 61.35, ss316: 77.26 },
+            "double_3/4_NPT": { brass: 69.31, ss304: 133.26, ss316: "N/A" },
+            "1_NPT": { brass: 36.02, ss304: 64.95, ss316: 77.26 },
+            "double_1_NPT": { brass: 72.83, ss304: "N/A", ss316: "N/A" },
+            "non_standard_fitting": { brass: 71.00, ss304: 99.77, ss316: "N/A" },
+            "flange_1_1.5_2": { brass: "N/A", ss304: 16.62, ss316: "N/A" },
+            "non_std_round_flange": { brass: "N/A", ss304: 33.01, ss316: 40.18 },
+            "non_std_flange_shapes": { brass: "N/A", ss304: 33.01, ss316: 40.18 },
+            "ring_weld_tab_stop": { brass: "N/A", ss304: 16.68, ss316: "N/A" }
+        };
+
+        const optionsTable = {
+            distributedWattage: 17.80,
+            dualZone: 17.52,
+            doubleEnded: 40.47,
+            insulatedConnectors: 7.32,
+            nonInsulatedConnectors: 4.51,
+            preOxidize: 19.48,
+            passivation_0_12: 7.32,
+            passivation_13_24: 10.98,
+            multiZoneBase: 57.67,
+            multiZoneAddOver24: 1.53
+        };
+
+        function updateValidities() {
+            const fittingType = document.getElementById('fittingType').value;
+            const fittingMatSelect = document.getElementById('fittingMat');
+            
+            // Validate fitting material availability based on chart N/A rules
+            if (fittingType !== "none" && fittingsTable[fittingType]) {
+                let validOpts = fittingsTable[fittingType];
+                for (let i = 0; i < fittingMatSelect.options.length; i++) {
+                    let opt = fittingMatSelect.options[i];
+                    let matKey = opt.value === "brass" ? "brass" : (opt.value === "ss304" ? "ss304" : "ss316");
+                    if (validOpts[matKey] === "N/A") {
+                        opt.disabled = true;
+                        if (opt.selected) {
+                            // find first enabled
+                            for (let j = 0; j < fittingMatSelect.options.length; j++) {
+                                if (!fittingMatSelect.options[j].disabled) {
+                                    fittingMatSelect.selectedIndex = j;
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        opt.disabled = false;
+                    }
+                }
+            } else {
+                for (let i = 0; i < fittingMatSelect.options.length; i++) {
+                    fittingMatSelect.options[i].disabled = false;
+                }
+            }
+        }
+
+        function getLeadAdderCost(type, length) {
+            if (!leadLengthAdders[type]) return 0;
+            let standardLengths = [10, 12, 18, 24, 30, 36, 48, 60, 72];
+            if (standardLengths.includes(length)) {
+                return leadLengthAdders[type][length];
+            } else {
+                let lower = 72;
+                for (let i = standardLengths.length - 1; i >= 0; i--) {
+                    if (length >= standardLengths[i]) {
+                        lower = standardLengths[i];
+                        break;
+                    }
+                }
+                if (length < 10) return leadLengthAdders[type][10];
+                return leadLengthAdders[type][lower] + (length - lower) * leadLengthAdders[type].perInch;
+            }
+        }
+
+        function getColumnIndexForArmorBraid(leadLen) {
+            let std = [10, 14, 20, 26, 32, 38, 50, 62, 74];
+            let idx = 0;
+            for (let i = 0; i < std.length; i++) {
+                if (leadLen >= std[i]) idx = i;
+            }
+            return idx;
+        }
+
+        function calculatePrice() {
+            updateValidities();
+
+            const diameter = document.getElementById('diameter').value;
+            const length = parseInt(document.getElementById('length').value) || 2;
+            
+            let heaterProfile = basePricing[diameter];
+            let basePrice = 0;
+            let effLen = Math.max(2, length);
+            if (heaterProfile.lengths[effLen] !== undefined) {
+                basePrice = heaterProfile.lengths[effLen];
+            } else {
+                basePrice = heaterProfile.lengths[12] + (effLen - 12) * heaterProfile.addInch;
+            }
+
+            const leadType = document.getElementById('leadType').value;
+            const leadLength = parseInt(document.getElementById('leadLength').value) || 10;
+            let leadCost = getLeadAdderCost(leadType, leadLength);
+
+            const leadConfig = document.getElementById('leadConfig').value;
+            const configExtraParam = parseInt(document.getElementById('configExtraParam').value) || 1;
+            let configCost = 0;
+            if (leadConfig === "rightAngle" || leadConfig === "strainRelief" || leadConfig === "springGuard") {
+                configCost = leadConfigs[leadConfig];
+            } else if (leadConfig === "ceramicBeads" || leadConfig === "singleShrinkBoth" || leadConfig === "shrinkEach" || leadConfig === "groundPerInch") {
+                configCost = leadConfigs[leadConfig] * configExtraParam;
+            } else if (leadConfig === "groundBase") {
+                configCost = leadConfigs.groundBase + (configExtraParam * leadConfigs.groundPerInch);
+            }
+
+            const endSeal = document.getElementById('endSeal').value;
+            let endSealCost = endSeals[endSeal] || 0;
+
+            const armorType = document.getElementById('armorType').value;
+            let armorCost = 0;
+            if (armorType !== "none") {
+                let colIdx = getColumnIndexForArmorBraid(leadLength);
+                let standardLeadLengths = [10, 14, 20, 26, 32, 38, 50, 62, 74];
+                let stdL = standardLeadLengths[colIdx];
+                let baseMatrixCost = armorPrices[armorType][colIdx];
+                if (leadLength > stdL) {
+                    armorCost = baseMatrixCost + (leadLength - stdL) * armorPerInch;
+                } else {
+                    armorCost = baseMatrixCost;
+                }
+            }
+
+            const braidType = document.getElementById('braidType').value;
+            let braidCost = 0;
+            if (braidType !== "none") {
+                let colIdx = getColumnIndexForArmorBraid(leadLength);
+                let standardLeadLengths = [10, 14, 20, 26, 32, 38, 50, 62, 74];
+                let stdL = standardLeadLengths[colIdx];
+                let baseMatrixCost = braidPrices[braidType][colIdx];
+                if (leadLength > stdL) {
+                    braidCost = baseMatrixCost + (leadLength - stdL) * braidPerInch;
+                } else {
+                    braidCost = baseMatrixCost;
+                }
+            }
+
+            const tcLength = parseInt(document.getElementById('tcLength').value) || 0;
+            let tcCost = 0;
+            if (tcLength > 0) {
+                let stdTC = [10, 12, 18, 24, 30, 36, 48, 60, 72];
+                if (stdTC.includes(tcLength)) {
+                    tcCost = tcTable[tcLength];
+                } else {
+                    let lower = 72;
+                    for (let i = stdTC.length - 1; i >= 0; i--) {
+                        if (tcLength >= stdTC[i]) { lower = stdTC[i]; break; }
+                    }
+                    if (tcLength < 10) tcCost = tcTable[10];
+                    else tcCost = tcTable[lower] + (tcLength - lower) * tcPerInch;
+                }
+            }
+
+            const fittingType = document.getElementById('fittingType').value;
+            const fittingMat = document.getElementById('fittingMat').value;
+            let fittingCost = 0;
+            if (fittingType !== "none" && fittingsTable[fittingType]) {
+                let val = fittingsTable[fittingType][fittingMat];
+                if (typeof val === "number") fittingCost = val;
+            }
+
+            const optionType = document.getElementById('optionType').value;
+            let optionCost = optionsTable[optionType] || 0;
+            // Handle specific restriction rule: 24+ not available for passivation in chart
+            if (optionType === "passivation_13_24" && length > 24) {
+                optionCost = 0; // or invalid/unavailable notice
+            }
+
+            let total = basePrice + leadCost + configCost + endSealCost + armorCost + braidCost + tcCost + fittingCost + optionCost;
+
+            document.getElementById('totalPrice').innerText = '$' + total.toFixed(2);
+        }
+
+        window.onload = function() {
+            calculatePrice();
+        }
+    </script>
+    <style>
+        :root {
+            --primary-color: #1a365d;
+            --secondary-color: #2b6cb0;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #e2e8f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 24px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .summary-card {
+            background-color: #ebf8ff;
+            border: 1px solid #bee3f8;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: center;
+        }
+        .summary-card h2 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+        .total-price {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2b6cb0;
+        }
+        .note {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Non-Swaged Cartridge Heaters (304SS Sheath)</h1>
+
+
+    <div class="grid-2">
+        <div class="form-group">
+            <label for="diameter">Diameter / Size</label>
+            <select id="diameter" onchange="calculatePrice()">
+                <option value="5/8">5/8" Dia</option>
+                <option value="3/4">3/4" Dia</option>
+                <option value="1">1" Dia</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="length">Length (Inches)</label>
+            <input type="number" id="length" min="2" max="36" value="2" oninput="calculatePrice()" onchange="calculatePrice()">
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="form-group">
+            <label for="leadType">Lead Wire Type / Gauge</label>
+            <select id="leadType" onchange="calculatePrice()">
+                <option value="18">18 ga.</option>
+                <option value="16">16 ga.</option>
+                <option value="14">14 ga.</option>
+                <option value="sjo2">SJO Cord (2 conductor, 18 ga)</option>
+                <option value="sjo3">SJO Cord (3 conductor, 18 ga)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="leadLength">Lead Length (Inches)</label>
+            <input type="number" id="leadLength" min="10" max="120" value="10" oninput="calculatePrice()" onchange="calculatePrice()">
+
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="form-group">
+            <label for="leadConfig">Lead Configurations and End Seals</label>
+            <select id="leadConfig" onchange="calculatePrice()">
+                <option value="none">None</option>
+                <option value="rightAngle">Right Angle Leads</option>
+                <option value="crimped">Crimped on Leads</option>
+                <option value="strainRelief">Strain Relief Clip</option>
+                <option value="springGuard">Spring Guard</option>
+                <option value="ceramicBeads">Ceramic Beads (per inch)</option>
+                <option value="singleShrinkBoth">Single sleeve/heat shrink over both leads (per inch)</option>
+                <option value="shrinkEach">Sleeve or heat shrink on each lead (per inch)</option>
+                <option value="groundBase">Ground wire base price</option>
+                <option value="groundPerInch">Ground wire per inch</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="configExtraParam">Config Multiplier (Inches / Qty)</label>
+            <input type="number" id="configExtraParam" min="1" value="1" oninput="calculatePrice()" onchange="calculatePrice()">
+         
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="form-group">
+            <label for="endSeal">End Seal / Potting</label>
+            <select id="endSeal" onchange="calculatePrice()">
+                <option value="rtv">RTV Potting</option>
+                <option value="epoxy">Epoxy Potting</option>
+                <option value="epoxylite">Epoxylite Potting</option>
+                <option value="epoxyOverRtv">Epoxy over RTV Potting</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="tcLength">Internal Thermocouple Lead Length</label>
+            <select id="tcLength" onchange="calculatePrice()">
+                <option value="0">None</option>
+                <option value="10">10"</option>
+                <option value="12">12"</option>
+                <option value="18">18"</option>
+                <option value="24">24"</option>
+                <option value="30">30"</option>
+                <option value="36">36"</option>
+                <option value="48">48"</option>
+                <option value="60">60"</option>
+                <option value="72">72"</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="form-group">
+            <label for="armorType">Stainless Steel Armor (Flex Hose)</label>
+            <select id="armorType" onchange="calculatePrice()">
+                <option value="none">None</option>
+                <option value="straight">Straight, swaged in</option>
+                <option value="rightAngle">Rt. Angle Armor</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="braidType">Stainless Steel Braid</label>
+            <select id="braidType" onchange="calculatePrice()">
+                <option value="none">None</option>
+                <option value="straight">Straight SS Braid</option>
+                <option value="rightAngle">Right Angle SS Braid</option>
+                <option value="overEach">SS Braid over each lead</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="form-group">
+            <label for="fittingType">Fittings, Flanges, Etc. (Type)</label>
+            <select id="fittingType" onchange="calculatePrice()">
+                <option value="none">None</option>
+                <option value="1/2_NPT">1/2" NPT</option>
+                <option value="double_1/2_NPT">Double Ended 1/2" NPT</option>
+                <option value="3/4_NPT">3/4" NPT</option>
+                <option value="double_3/4_NPT">Double Ended 3/4" NPT</option>
+                <option value="1_NPT">1" NPT</option>
+                <option value="double_1_NPT">Double Ended 1" NPT</option>
+                <option value="non_standard_fitting">Non Standard Threaded Fitting</option>
+                <option value="flange_1_1.5_2">1", 1-1/2" or 2" Diameter Flange</option>
+                <option value="non_std_round_flange">Non-Standard Round Flange</option>
+                <option value="non_std_flange_shapes">Non-Standard Flange, Other Shapes</option>
+                <option value="ring_weld_tab_stop">Ring Stop, Weld Bead, or Tab Stop</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="fittingMat">Fittings Material</label>
+            <select id="fittingMat" onchange="calculatePrice()">
+                <option value="brass">Brass</option>
+                <option value="ss304">304 SS</option>
+                <option value="ss316">316 SS</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="optionType">Other Options</label>
+        <select id="optionType" onchange="calculatePrice()">
+            <option value="none">None</option>
+            <option value="distributedWattage">Distributed Wattage</option>
+            <option value="dualZone">Dual Zone Heater</option>
+            <option value="doubleEnded">Double ended construction</option>
+            <option value="insulatedConnectors">Insulated connectors (ring, spade, disconnect, etc.)</option>
+            <option value="nonInsulatedConnectors">Non-insulated connectors</option>
+            <option value="preOxidize">Pre-oxidize heater</option>
+            <option value="passivation_0_12">Passivation (0-12")</option>
+            <option value="passivation_13_24">Passivation (13"-24")</option>
+            <option value="multiZoneBase">Multi Zone Base (24" OAL or less)</option>
+            <option value="multiZoneAddOver24">Adder for each in over 24"</option>
+        </select>
+    </div>
+
+    <div class="summary-card">
+        <h2>Estimated Unit Price</h2>
+        <div class="total-price" id="totalPrice">$0.00</div>
+    </div>
+</div>
+
+</body>
+</html>
